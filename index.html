@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The quality layer for LLM apps — by rxNxkolai</title>
+<meta name="description" content="Eleven small, zero-dependency tools for building reliable, secure LLM applications. One coherent toolchain, from authoring a prompt to supervising an agent." />
+<meta property="og:title" content="The quality layer for LLM apps" />
+<meta property="og:description" content="Eleven small, zero-dependency tools, from authoring a prompt to supervising an agent. CI-green, MIT, runnable with npx." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0e14'/%3E%3Ccircle cx='16' cy='8' r='3' fill='%23f4515b'/%3E%3Ccircle cx='24' cy='20' r='3' fill='%2322d3ee'/%3E%3Ccircle cx='8' cy='20' r='3' fill='%23a371f7'/%3E%3Ccircle cx='16' cy='17' r='3' fill='%233fb950'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,500;1,6..72,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:#0b0e14; --surface:#12161f; --surface-2:#1a1f2b; --border:#222a38; --border-2:#2a3140;
+    --ink:#e8edf5; --muted:#9aa4b2; --faint:#6b7480;
+    --redline:#f0a830; --crucible:#f4515b; --warden:#22d3ee; --stencil:#818cf8;
+    --litmus:#3fb950; --cassette:#f472b6; --tally:#a3e635; --rivet:#f97316;
+    --veil:#14b8a6; --veritas:#4493f8; --quorum:#a371f7;
+    --sans:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --serif:'Newsreader',Georgia,'Times New Roman',serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
+    line-height:1.5; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  a { color:inherit; }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 24px; }
+
+  /* Ambient color field */
+  .field { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.55;
+    background:
+      radial-gradient(40vw 40vw at 12% 8%, rgba(240,168,48,0.10), transparent 60%),
+      radial-gradient(38vw 38vw at 88% 4%, rgba(163,113,247,0.12), transparent 60%),
+      radial-gradient(44vw 44vw at 78% 64%, rgba(34,211,238,0.08), transparent 60%),
+      radial-gradient(40vw 40vw at 8% 72%, rgba(63,185,80,0.07), transparent 60%); }
+  .content { position:relative; z-index:1; }
+
+  /* Nav */
+  nav { display:flex; align-items:center; justify-content:space-between; padding:22px 0; }
+  .brand { display:flex; align-items:center; gap:11px; font-weight:600; letter-spacing:-0.01em; }
+  .brand .dot { width:11px; height:11px; border-radius:50%;
+    background:conic-gradient(var(--redline),var(--crucible),var(--quorum),var(--warden),var(--litmus),var(--redline)); }
+  .nav-links { display:flex; gap:22px; align-items:center; font-size:14px; color:var(--muted); }
+  .nav-links a { text-decoration:none; transition:color .15s; }
+  .nav-links a:hover { color:var(--ink); }
+  .ghbtn { border:1px solid var(--border-2); border-radius:999px; padding:7px 15px; color:var(--ink); }
+  .ghbtn:hover { border-color:var(--faint); }
+
+  /* Hero */
+  header.hero { padding:72px 0 26px; max-width:880px; }
+  .eyebrow { font-size:13px; color:var(--faint); letter-spacing:0.04em; margin-bottom:20px; }
+  .eyebrow b { color:var(--muted); font-weight:600; }
+  h1 { font-family:var(--serif); font-weight:500; font-size:clamp(40px,7vw,80px); line-height:1.02;
+    letter-spacing:-0.025em; margin:0 0 22px; text-wrap:balance; }
+  h1 .grad { font-style:italic; color:var(--stencil); }
+  .lede { font-size:clamp(16px,2vw,19px); color:var(--muted); max-width:60ch; margin:0 0 30px; }
+  .cta { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .btn { display:inline-flex; align-items:center; gap:9px; border-radius:999px; padding:12px 20px;
+    font-weight:600; font-size:15px; text-decoration:none; transition:transform .15s, background .15s, border-color .15s; }
+  .btn:hover { transform:translateY(-1px); }
+  .btn.primary { background:var(--ink); color:#0b0e14; }
+  .btn.primary:hover { background:#fff; }
+  .btn.ghost { border:1px solid var(--border-2); color:var(--ink); }
+  .btn.ghost:hover { border-color:var(--faint); }
+  .meta-row { display:flex; gap:22px; flex-wrap:wrap; margin-top:34px; color:var(--faint); font-size:13.5px; }
+  .meta-row b { color:var(--ink); font-weight:600; }
+
+  /* Lifecycle pipeline */
+  .pipe-section { padding:30px 0 8px; }
+  .pipe-label { font-size:12.5px; text-transform:uppercase; letter-spacing:0.14em; color:var(--faint); margin-bottom:16px; }
+  .pipe { position:relative; display:grid; grid-template-columns:repeat(11,1fr); gap:0; }
+  .pipe::before { content:''; position:absolute; top:9px; left:5%; right:5%; height:2px;
+    background:linear-gradient(90deg,var(--redline),var(--crucible),var(--warden),var(--stencil),var(--litmus),var(--cassette),var(--tally),var(--rivet),var(--veil),var(--veritas),var(--quorum)); opacity:0.5; }
+  .stage { position:relative; display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; }
+  .stage .node { width:20px; height:20px; border-radius:50%; background:var(--bg); border:2px solid var(--c);
+    box-shadow:0 0 0 4px var(--bg); transition:transform .2s, box-shadow .2s; }
+  .stage:hover .node { transform:scale(1.25); }
+  .stage .s-stage { font-size:10.5px; color:var(--faint); text-transform:uppercase; letter-spacing:0.06em; }
+  .stage .s-name { font-size:12px; font-weight:600; color:var(--c); font-family:var(--mono); }
+  @media (max-width:760px){
+    .pipe { grid-template-columns:repeat(4,1fr); gap:18px 6px; }
+    .pipe::before { display:none; }
+  }
+
+  /* Tools grid */
+  section.tools { padding:54px 0 20px; }
+  .sec-head { display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:22px; flex-wrap:wrap; }
+  .sec-head h2 { font-family:var(--serif); font-weight:500; font-size:30px; letter-spacing:-0.02em; margin:0; }
+  .sec-head p { color:var(--muted); font-size:14.5px; margin:0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; }
+  .card { position:relative; background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:20px; display:flex; flex-direction:column; gap:12px; overflow:hidden;
+    transition:border-color .2s, transform .2s, background .2s; }
+  .card:hover { border-color:color-mix(in srgb, var(--c) 55%, var(--border)); transform:translateY(-3px); background:var(--surface-2); }
+  .card::after { content:''; position:absolute; inset:0 0 auto 0; height:2px; background:var(--c); opacity:0.7; }
+  .card-top { display:flex; align-items:center; gap:12px; }
+  .glyph { width:42px; height:42px; flex:none; border-radius:11px; display:grid; place-items:center;
+    background:color-mix(in srgb, var(--c) 14%, transparent); color:var(--c); border:1px solid color-mix(in srgb, var(--c) 30%, transparent); }
+  .glyph svg { width:24px; height:24px; }
+  .card h3 { margin:0; font-size:18px; font-weight:700; letter-spacing:-0.01em; }
+  .card h3 .stage-tag { font-family:var(--mono); font-size:10.5px; font-weight:600; color:var(--c);
+    text-transform:uppercase; letter-spacing:0.06em; display:block; margin-bottom:1px; }
+  .card p { margin:0; color:var(--muted); font-size:14px; flex:1; }
+  .cmd { font-family:var(--mono); font-size:12px; color:var(--faint); background:var(--bg);
+    border:1px solid var(--border); border-radius:8px; padding:8px 10px; overflow:auto; white-space:nowrap; }
+  .cmd .p { color:var(--c); }
+  .card-link { font-size:13.5px; font-weight:600; color:var(--c); text-decoration:none; width:max-content; }
+  .card-link:hover { text-decoration:underline; }
+
+  /* Why strip */
+  section.why { padding:46px 0; }
+  .why-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+  .why-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 20px; }
+  .why-card .k { font-family:var(--serif); font-size:26px; font-weight:600; letter-spacing:-0.01em; }
+  .why-card .v { color:var(--muted); font-size:13.5px; margin-top:4px; }
+
+  footer { padding:40px 0 64px; border-top:1px solid var(--border); margin-top:24px;
+    display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; color:var(--faint); font-size:13.5px; }
+  footer a { color:var(--muted); text-decoration:none; }
+  footer a:hover { color:var(--ink); }
+
+  /* Motion: enhance an already-visible default */
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { opacity:0; transform:translateY(14px); animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards; }
+    @keyframes rise { to { opacity:1; transform:none; } }
+    .card.reveal { animation-delay:var(--d,0s); }
+  }
+</style>
+</head>
+<body>
+<div class="field"></div>
+<div class="content">
+<div class="wrap">
+
+  <nav>
+    <div class="brand"><span class="dot"></span> rxNxkolai</div>
+    <div class="nav-links">
+      <a href="#tools">Tools</a>
+      <a href="#why">Why</a>
+      <a class="ghbtn" href="https://github.com/rxNxkolai" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow reveal"><b>Eleven tools.</b> Zero runtime dependencies. One toolchain.</div>
+    <h1 class="reveal" style="animation-delay:.05s">The quality layer for <span class="grad">LLM apps.</span></h1>
+    <p class="lede reveal" style="animation-delay:.1s">Small, sharp command-line tools for the unglamorous half of shipping AI: linting prompts, red-teaming them, testing behavior, repairing output, redacting data, and supervising agents. Each one runs with a single <code>npx</code>, has no dependencies, and is green on Node 18, 20, and 22.</p>
+    <div class="cta reveal" style="animation-delay:.15s">
+      <a class="btn primary" href="#tools">Explore the toolchain</a>
+      <a class="btn ghost" href="https://github.com/rxNxkolai" target="_blank" rel="noopener">View on GitHub</a>
+    </div>
+    <div class="meta-row reveal" style="animation-delay:.2s">
+      <span><b>0</b> runtime deps</span>
+      <span><b>MIT</b> licensed</span>
+      <span><b>CI-green</b> Node 18 / 20 / 22</span>
+      <span><b>npx</b>-runnable</span>
+    </div>
+  </header>
+
+  <section class="pipe-section reveal" style="animation-delay:.25s">
+    <div class="pipe-label">The lifecycle of an AI feature</div>
+    <div class="pipe">
+      <a class="stage" href="#redline"  style="--c:var(--redline)"><span class="node"></span><span class="s-stage">Author</span><span class="s-name">redline</span></a>
+      <a class="stage" href="#crucible" style="--c:var(--crucible)"><span class="node"></span><span class="s-stage">Harden</span><span class="s-name">crucible</span></a>
+      <a class="stage" href="#warden"   style="--c:var(--warden)"><span class="node"></span><span class="s-stage">Gate</span><span class="s-name">warden</span></a>
+      <a class="stage" href="#stencil"  style="--c:var(--stencil)"><span class="node"></span><span class="s-stage">Render</span><span class="s-name">stencil</span></a>
+      <a class="stage" href="#litmus"   style="--c:var(--litmus)"><span class="node"></span><span class="s-stage">Test</span><span class="s-name">litmus</span></a>
+      <a class="stage" href="#cassette" style="--c:var(--cassette)"><span class="node"></span><span class="s-stage">Mock</span><span class="s-name">cassette</span></a>
+      <a class="stage" href="#tally"    style="--c:var(--tally)"><span class="node"></span><span class="s-stage">Measure</span><span class="s-name">tally</span></a>
+      <a class="stage" href="#rivet"    style="--c:var(--rivet)"><span class="node"></span><span class="s-stage">Repair</span><span class="s-name">rivet</span></a>
+      <a class="stage" href="#veil"     style="--c:var(--veil)"><span class="node"></span><span class="s-stage">Redact</span><span class="s-name">veil</span></a>
+      <a class="stage" href="#veritas"  style="--c:var(--veritas)"><span class="node"></span><span class="s-stage">Verify</span><span class="s-name">veritas</span></a>
+      <a class="stage" href="#quorum"   style="--c:var(--quorum)"><span class="node"></span><span class="s-stage">Supervise</span><span class="s-name">quorum</span></a>
+    </div>
+  </section>
+
+  <section class="tools" id="tools">
+    <div class="sec-head">
+      <h2>The toolchain</h2>
+      <p>Eleven tools, each doing one job well.</p>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="why" id="why">
+    <div class="sec-head"><h2>Built to be trusted</h2><p>The same discipline in every repo.</p></div>
+    <div class="why-grid">
+      <div class="why-card reveal"><div class="k">0 deps</div><div class="v">No runtime dependencies. Nothing to audit but the code itself.</div></div>
+      <div class="why-card reveal"><div class="k">Offline</div><div class="v">No model calls, no network, no keys. Your prompts never leave your machine.</div></div>
+      <div class="why-card reveal"><div class="k">CI-first</div><div class="v">Exit codes and score gates so each tool drops straight into a pipeline.</div></div>
+      <div class="why-card reveal"><div class="k">Readable reports</div><div class="v">Every tool ships a self-contained, interactive HTML report.</div></div>
+    </div>
+  </section>
+
+  <footer>
+    <div>Built by <a href="https://github.com/rxNxkolai" target="_blank" rel="noopener">rxNxkolai</a>. MIT licensed.</div>
+    <div>A toolchain for reliable, secure LLM applications.</div>
+  </footer>
+
+</div>
+</div>
+
+<script>
+  const G = {
+    redline:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="15" y2="12"/><path d="M4 18 q2 -3 4 0 t4 0 t4 0 t4 0" stroke-width="1.6"/></svg>',
+    crucible:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none"/><line x1="5" y1="10" x2="19" y2="10"/><path d="M6 10 L18 10 L16 19 Q12 22 8 19 Z"/></svg>',
+    warden:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 L20 6 L20 12 Q20 18 12 21 Q4 18 4 12 L4 6 Z"/><circle cx="12" cy="11" r="1.7" fill="currentColor" stroke="none"/><path d="M10.6 12.4 L10 16 L14 16 L13.4 12.4 Z" fill="currentColor" stroke="none"/></svg>',
+    stencil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 7 L17 12 L12 17 L7 12 Z" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="#0b0e14" stroke="none"/></svg>',
+    litmus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7 l2 2 l3 -3"/><line x1="13" y1="7" x2="20" y2="7"/><path d="M5 16 l2 2 l3 -3"/><line x1="13" y1="16" x2="20" y2="16"/></svg>',
+    cassette:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="12" r="2"/></svg>',
+    tally:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="9"/><line x1="18" y1="20" x2="18" y2="5"/></svg>',
+    rivet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 Q5 4 5 8 L5 16 Q5 20 9 20"/><path d="M15 4 Q19 4 19 8 L19 16 Q19 20 15 20"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/></svg>',
+    veil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 Q12 5 21 12 Q12 19 3 12 Z"/><circle cx="12" cy="12" r="2.4"/><line x1="5" y1="19" x2="19" y2="5"/></svg>',
+    veritas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><line x1="16" y1="16" x2="21" y2="21"/><path d="M8.5 11 l2 2 l3.5 -4"/></svg>',
+    quorum:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="4" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="8.5" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="15.5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="20" r="1.6" fill="currentColor" stroke="none"/><circle cx="5" cy="15.5" r="1.6" fill="currentColor" stroke="none"/><circle cx="5" cy="8.5" r="1.6" fill="currentColor" stroke="none"/></svg>'
+  };
+  const TOOLS = [
+    ['redline','Author','Lint your prompt and agent-instruction files for injection sinks, bloat, and weak directives.'],
+    ['crucible','Harden','Red-team a system prompt: find the weaknesses that get it leaked or jailbroken, with an adversarial probe for each.'],
+    ['warden','Gate','Lint agent permission configs (settings.json, .mcp.json) for wildcard shell, bypassed prompts, and hard-coded secrets.'],
+    ['stencil','Render','Interpolate untrusted user data into a prompt without opening a prompt-injection hole.'],
+    ['litmus','Test','Unit tests for prompts: assertions, an offline mock provider, and regression history.'],
+    ['cassette','Mock','Record real LLM responses once, replay them offline and free in every test run.'],
+    ['tally','Measure','Token count, multi-model cost estimate, and a per-section context-budget breakdown.'],
+    ['rivet','Repair','Validate and repair the JSON an LLM emits: fences, trailing commas, smart quotes, truncation.'],
+    ['veil','Redact','Detect and redact PII and secrets before text is sent to a model or written to a log.'],
+    ['veritas','Verify','Extract the claims and citations in an answer, check the sources, and score its trustworthiness.'],
+    ['quorum','Supervise','A council of critic-judges that watches an agent loop and flags off-task, ungrounded, or unsafe steps.']
+  ];
+  const grid = document.getElementById('grid');
+  TOOLS.forEach(([name,stage,desc],i)=>{
+    const el = document.createElement('a');
+    el.className = 'card reveal';
+    el.id = name;
+    el.href = 'https://github.com/rxNxkolai/'+name;
+    el.target = '_blank'; el.rel = 'noopener';
+    el.style.setProperty('--c','var(--'+name+')');
+    el.style.setProperty('--d',(0.03*i)+'s');
+    el.style.textDecoration='none';
+    el.innerHTML =
+      '<div class="card-top"><div class="glyph">'+G[name]+'</div>'+
+      '<h3><span class="stage-tag">'+stage+'</span>'+name+'</h3></div>'+
+      '<p>'+desc+'</p>'+
+      '<div class="cmd"><span class="p">npx</span> github:rxNxkolai/'+name+'</div>'+
+      '<span class="card-link">View on GitHub &rarr;</span>';
+    grid.appendChild(el);
+  });
+</script>
+</body>
+</html>
